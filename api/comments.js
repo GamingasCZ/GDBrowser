@@ -74,7 +74,14 @@ module.exports = async (app, req, res) => {
 
         commentArray.push(comment)
 
-      }) 
+      })
+      
+      // If we get less comments than we fetched for, 
+      if (commentArray.length < count && req.query.type == "commentHistory") {
+          pages[0] = +pages[1]+count
+          commentArray[0].pages = +Math.ceil(+pages[0] / +pages[2])
+          console.log(commentArray[0].pages)
+      }
 
       return res.send(commentArray)
 

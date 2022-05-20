@@ -147,6 +147,7 @@ let lastPage = 0
 let auto = false
 let interval = null
 let commentCache = {}
+let maxPageError = -1
 
 let target = `../api/level/${lvlID}`
 if (lvlID > 999999999 || lvlID < -999999999) window.location.href = window.location.href.replace("comments", "search")
@@ -207,12 +208,15 @@ function buildComments(lvl) {
 		}
 	}
 
+let setPages = false
 function appendComments(auto, noCache) {
 
 if (loadingComments) return;
 else loadingComments = true;
 
-if (!auto) $('#commentBox').html(`<div class="supercenter" id="loading" style="height: 12%;"><img class="spin noSelect" src="../assets/loading.png" height="105%"></div>`)
+if (!auto) {
+	$('#commentBox').html(`<div class="supercenter" id="loading" style="height: 12%;"><img class="spin noSelect" src="../assets/loading.png" height="105%"></div>`)
+}
 
 if (page == 0) {
 	$('#pageDown').hide()
@@ -234,9 +238,14 @@ function addComments(res) {
 	
 	if (history && lvl.commentHistory != "all") $('#pageUp').hide()
 
-	if (res == -1 || (history && lvl.commentHistory != "all")) {
-		loadingComments = false; return $('#loading').hide()
+	if (res == -1 || (history && lvl.commentHistory != "all" || page == maxPageError)) {
+		loadingComments = false;
+		maxPageError = page
+		$('#commentBox').append('<h1 class="gold noComm supercenter">No Comments!</h1>')
+		$('#pageUp').hide()
+		return $('#loading').hide()
 	}
+	$('#pageUp').show()
 
 	commentCache[page] = res
 
@@ -255,6 +264,7 @@ function addComments(res) {
 		let modNumber = x.moderator || lvl.moderator
 
 		if (x.pages) {
+			setPages = true
 			lastPage = x.pages
 			$('#pagenum').html(`Page ${page+1} of ${x.pages}`)
 			if (page+1 >= x.pages) $('#pageUp').hide()
@@ -316,6 +326,11 @@ function addComments(res) {
 
 	})
 
+	if (!setPages && $('#pagenum').html() != '') {
+		$('#pagenum').html('')
+		$('#pageUp').show()
+	}
+	
 	$('.commentText').each(function() {
 		if ($(this).text().length > 100) {
 		let overflow = ($(this).text().length - 100) * 0.01
@@ -325,6 +340,7 @@ function addComments(res) {
 	});
 
 	 $('#loading').hide()
+	 $(".noComm").remove()
 	 return loadingComments = false;
 	}
 }
@@ -338,6 +354,7 @@ $('#lastPage').click(function() {if (loadingComments || auto) return; page = las
 
 function resetSort() {
 	page = 0
+	maxPageError = -1
 	auto = false
 	clearInterval(interval)
 	commentCache = {}
@@ -368,6 +385,7 @@ $('#compactMode').click(function() {
 	compact = !compact
 	lastPage = 0;
 	page = 0;
+	maxPageError = -1;
 	$('#compactMode').attr('src', `../assets/compact-${compact ? "on" : "off"}.png`)
 	appendComments()
 })
@@ -377,6 +395,7 @@ $('#autoMode').click(function() {
 	auto = !auto
 	mode = "time"
 	page = 0;
+	maxPageError = -1;
 	$('#timeSort').attr('src', "../assets/sort-time-on.png")
 	$('#topSort').attr('src', "../assets/sort-likes.png")
 
@@ -399,6 +418,7 @@ $(document).on('click', '.refreshBtn', function () {
 	if (loadingComments) return
 	lastPage = 0;
 	page = 0;
+	maxPageError = -1;
 	appendComments(false, true)
 })
 
