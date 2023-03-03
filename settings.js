@@ -3,7 +3,7 @@
 
 module.exports = {
     
-    port: process.env.PORT || 3001, // Port to host website on
+    port: 3001, // Port to host website on
 
     params: {   // Always send this stuff to the servers
         secret: 'Wmfd2893gb7',
